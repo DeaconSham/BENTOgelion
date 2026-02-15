@@ -25,15 +25,22 @@ FLASK_URL = "http://localhost:5000/update_location"
 x, y = 0.0, 0.0
 heading = 0.0
 search_phase = "STRAIGHT" # STRAIGHT, TURN_1, SHIFT, TURN_2
+#DO NOT ADJUST BIAS IF IT GOES STRAIGHT
+LEFT_MOTOR_BIAS = 0.85  # The left motor will only run at 85% of the requested speed (lower if too strong, higher if too weak)
+RIGHT_MOTOR_BIAS = 1.0  # The right motor runs at 100%
 
 def motor_control(left, right):
-    left_pwm.value = abs(left)
-    left_dir1.value = 1 if left > 0 else 0
-    left_dir2.value = 0 if left > 0 else 1
+    # Apply the bias to the inputs
+    final_left = left * LEFT_MOTOR_BIAS
+    final_right = right * RIGHT_MOTOR_BIAS
     
-    right_pwm.value = abs(right)
-    right_dir1.value = 1 if right > 0 else 0
-    right_dir2.value = 0 if right > 0 else 1
+    left_pwm.value = abs(final_left)
+    left_dir1.value = 1 if final_left > 0 else 0
+    left_dir2.value = 0 if final_left > 0 else 1
+    
+    right_pwm.value = abs(final_right)
+    right_dir1.value = 1 if final_right > 0 else 0
+    right_dir2.value = 0 if final_right > 0 else 1
 
 def update_map(dist_moved, angle_change=0):
     global x, y, heading
@@ -47,17 +54,23 @@ def update_map(dist_moved, angle_change=0):
     except:
         pass
 
+
+
+# --- CALIBRATION ---
+TIME_LEFT_90 = 0.82   # Time for a 90-deg turn to the LEFT (decrease if turns left too much)
+TIME_RIGHT_90 = 0.78  # Time for a 90-deg turn to the RIGHT (decrease if right turn too much)
+# 90 degrees is left, -90 is right
 def turn_degrees(target_deg):
-    """Uses the IMU Gyro to attempt a precise turn"""
-    start_time = time.time()
-    print(f"Turning {target_deg} degrees...")
-    
-    # Simple timed turn (Adjust time based on your robot's weight)
-    # 1.0s at 0.6 speed is roughly 90 degrees on many chassis
-    duration = abs(target_deg / 90.0) * 0.8 
-    
+    # Select the magic number based on direction
+    if target_deg > 0:
+        magic_number = TIME_LEFT_90
+    else:
+        magic_number = TIME_RIGHT_90
+        
+    duration = abs(target_deg / 90.0) * magic_number
     direction = 1 if target_deg > 0 else -1
-    motor_control(TURN_SPEED * direction, -TURN_SPEED * direction)
+    
+    motor_control(-TURN_SPEED * direction, TURN_SPEED * direction)
     time.sleep(duration)
     motor_control(0, 0)
     update_map(0, target_deg)

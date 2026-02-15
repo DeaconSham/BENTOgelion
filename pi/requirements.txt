@@ -1,0 +1,4 @@
+# Raspberry Pi Vision Client Requirements
+picamera2>=0.3.0
+requests>=2.31.0
+pillow>=10.0.0

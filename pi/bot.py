@@ -60,23 +60,42 @@ def update_map(dist_moved, angle_change=0):
 # --- CALIBRATION ---
 TIME_LEFT_90 = 0.94   # Time for a 90-deg turn to the LEFT (decrease if turns left too much)
 TIME_RIGHT_90 = 0.90  # Time for a 90-deg turn to the RIGHT (decrease if right turn too much)
+
+ 
 def turn_degrees(target_deg):
-    # Select the magic number based on direction
     if target_deg > 0:
         magic_number = TIME_LEFT_90
+        motor_control(-TURN_SPEED, TURN_SPEED) # Swing turn left
     else:
         magic_number = TIME_RIGHT_90
-        
+        motor_control(TURN_SPEED, -TURN_SPEED) # Swing turn right
+
     duration = abs(target_deg / 90.0) * magic_number
-    #direction = 1 if target_deg > 0 else -1
     
-    if target_deg > 0:
-        motor_control(0, TURN_SPEED )
-    else:
-        motor_control(TURN_SPEED , 0)
-    time.sleep(duration)
+    # --- GYRO MEASUREMENT START ---
+    start_time = time.time()
+    total_rotated = 0
+    last_time = start_time
+    
+    while (time.time() - start_time) < duration:
+        current_time = time.time()
+        dt = current_time - last_time
+        
+        # Read the Z-axis (yaw) angular velocity
+        gyro_z = imu.get_gyro_data()['z'] 
+        
+        # Integrate velocity to get degrees: change = velocity * time
+        total_rotated += gyro_z * dt
+        
+        last_time = current_time
+        time.sleep(0.01) # High frequency sampling for accuracy
+    
     motor_control(0, 0)
-    update_map(0, target_deg)
+    
+    # Instead of telling the map "target_deg", tell it what the GYRO saw!
+    # Note: Gyro values might need a minus sign depending on orientation
+    print(f"Target: {target_deg}, Gyro measured: {total_rotated}")
+    update_map(0, total_rotated)
 
 def area_search():
     global search_phase

@@ -1,6 +1,6 @@
 # BENTOgelion
 
-A survival rover prototype built for MakeUofT 2026. The robot scouts areas for resources (food, water, people) and maps them on a dashboard for remote monitoring.
+A survival rover built for MakeUofT 2026. The robot scouts areas for resources (food, water, people) and maps them on a dashboard for remote monitoring.
 
 - **Demo**: [YouTube Video](https://youtu.be/4KVLskjAxu8)
 - **Devpost**: [Project Page](https://devpost.com/software/bentogelion)
